@@ -51,6 +51,7 @@
             <div class="card" data-id="${p.id}">
                 <img src="https://drive.google.com/thumbnail?sz=w1000&id=${p.imgId}" 
                      loading="lazy" 
+                     onclick="openModal(this.src)"
                      onerror="this.src='https://placehold.co/200?text=圖片載入失敗'">
                 <p>${p.id}</p>
             </div>
