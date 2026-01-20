@@ -9,13 +9,14 @@
         .search-container { position: sticky; top: 0; background: #f4f7f6; padding: 15px 0; z-index: 100; text-align: center; }
         input { width: 90%; max-width: 500px; padding: 12px 20px; border: 2px solid #005596; border-radius: 25px; font-size: 16px; outline: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         
-        /* 產品網格 */
+        /* 產品網格佈局 */
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-top: 10px; }
-        .card { background: white; padding: 12px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: none; cursor: pointer; }
+        .card { background: white; padding: 12px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: none; cursor: pointer; transition: 0.3s; }
+        .card:hover { transform: scale(1.02); }
         .card img { width: 100%; border-radius: 8px; object-fit: cover; aspect-ratio: 1/1; background: #eee; }
         .card p { margin: 10px 0 0; font-weight: bold; color: #333; font-size: 14px; }
 
-        /* 燈箱(放大功能)樣式 */
+        /* 圖片放大燈箱(Modal)樣式 */
         .modal { display: none; position: fixed; z-index: 1000; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); cursor: zoom-out; justify-content: center; align-items: center; }
         .modal-content { max-width: 95%; max-height: 90%; border-radius: 10px; box-shadow: 0 0 20px rgba(255,255,255,0.2); }
         
@@ -37,12 +38,12 @@
 
 <script>
     /**
-     * 資料區：請貼上您用 Excel 生成的資料
-     * 範例：{ id: "貨號", imgId: "圖片ID" }
+     * 資料區：請在此貼上您用 Excel 生成的 500 筆資料
+     * 格式必須是：{ id: "貨號", imgId: "圖片ID" }
      */
     const allProducts = [
         { id: "06781-113", imgId: "1fTZYtRzb61vA4MoKF1Q0_gv5bZ7PgrQr" },
-        // 在此下方繼續貼上其餘 499 筆資料
+        // 下方繼續貼上其餘 499 筆資料...
     ];
 
     // 初始化頁面
@@ -87,7 +88,7 @@
     function zoomImage(imgId) {
         const modal = document.getElementById('imgModal');
         const fullImg = document.getElementById('fullImage');
-        // 使用更高解析度的 thumbnail 連結進行放大
+        // 使用更高解析度 (sz=w1600) 進行放大顯示
         fullImg.src = `https://drive.google.com/thumbnail?sz=w1600&id=${imgId}`;
         modal.style.display = 'flex';
     }
