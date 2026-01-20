@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>產品貨號查詢系統</title>
+    <style>
+        /* 您可以發揮 CSS 專長美化介面 */
+        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; }
+        .search-container { position: sticky; top: 0; background: #f0f2f5; padding: 10px; z-index: 100; }
+        input { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin-top: 20px; }
+        .card { background: white; padding: 10px; border-radius: 10px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .card img { width: 100%; border-radius: 5px; object-fit: cover; aspect-ratio: 1/1; }
+        .no-result { display: none; color: #888; margin-top: 50px; }
+    </style>
+</head>
+<body>
+
+<div class="search-container">
+    <input type="text" id="searchInput" placeholder="輸入貨號進行搜尋..." oninput="search()">
+</div>
+
+<div id="productGrid" class="grid">
+    </div>
+<div id="noResult" class="no-result">找不到相符的產品</div>
+
+<script>
+    let allProducts = [];
+
+    // 這裡填入您發佈的 Google Sheets JSON 連結或直接讀取 CSV
+    async function loadData() {
+        // 建議將 Google Sheets 轉為 CSV 讀取最簡單
+        const url = '您的Google試算表發佈CSV連結';
+        const response = await fetch(url);
+        const data = await response.text();
+        // 簡易解析 CSV 邏輯 (需依您的欄位調整)
+        // ... 解析過程 ...
+        render(allProducts);
+    }
+
+    function render(products) {
+        const grid = document.getElementById('productGrid');
+        grid.innerHTML = products.map(p => `
+            <div class="card">
+                <img src="${p.imageUrl}" loading="lazy">
+                <p><strong>${p.id}</strong></p>
+            </div>
+        `).join('');
+    }
+
+    function search() {
+        const val = document.getElementById('searchInput').value.toLowerCase();
+        const cards = document.querySelectorAll('.card');
+        let hasMatch = false;
+        
+        cards.forEach(card => {
+            const id = card.querySelector('p').innerText.toLowerCase();
+            if (id.includes(val) && val !== "") {
+                card.style.display = 'block';
+                hasMatch = true;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+        document.getElementById('noResult').style.display = (hasMatch || val==="") ? 'none' : 'block';
+    }
+
+    loadData();
+</script>
+</body>
+</html>
