@@ -3,16 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>K-Swiss 產品貨號查詢</title>
+    <title>K-Swiss 產品貨號查詢系統</title>
     <style>
-        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; margin: 0; }
+        /* 基礎樣式設計 */
+        body { font-family: "Microsoft JhengHei", sans-serif; background: #f0f2f5; padding: 20px; margin: 0; }
         .search-container { position: sticky; top: 0; background: #f0f2f5; padding: 15px 0; z-index: 100; text-align: center; }
         input { width: 90%; max-width: 500px; padding: 12px 20px; border: 2px solid #005596; border-radius: 25px; font-size: 16px; outline: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        
+        /* 產品網格佈局 */
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-top: 10px; }
-        .card { background: white; padding: 10px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: none; transition: transform 0.2s; }
-        .card:hover { transform: scale(1.03); }
+        .card { background: white; padding: 12px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: none; }
         .card img { width: 100%; border-radius: 8px; object-fit: cover; aspect-ratio: 1/1; background: #eee; }
         .card p { margin: 10px 0 5px; font-weight: bold; color: #333; font-size: 14px; }
+        
+        /* 狀態提示 */
         .no-result { display: none; color: #888; text-align: center; margin-top: 50px; font-size: 18px; }
         .instruction { text-align: center; color: #666; margin-bottom: 10px; font-size: 14px; }
     </style>
@@ -31,35 +35,36 @@
 
 <script>
     /**
-     * 1. 這裡直接放入您的 500 筆資料
-     * 請確保 imgId 是正確的 Google Drive 檔案 ID
+     * 【資料庫區】
+     * 請將您使用 Excel 公式產生的 500 筆資料貼在下方括號內
      */
-   const allProducts = [
+    const allProducts = [
         { id: "06781-113", imgId: "1fTZYtRzb61vA4MoKF1Q0_gv5bZ7PgrQr" },
-        // 在這裡貼上剩下的 499 筆...
-        { id: "貨號2", imgId: "圖片ID2" },
-        { id: "貨號3", imgId: "圖片ID3" }
+        // --- 剩下的資料請接續貼在此處 ---
+        
     ];
 
-    // 初始化：建立所有卡片但先隱藏
+    // 初始化：建立所有產品節點
     function init() {
         const grid = document.getElementById('productGrid');
         grid.innerHTML = allProducts.map(p => `
             <div class="card" data-id="${p.id}">
-                <img src="https://drive.google.com/uc?export=view&id=${p.imgId}" loading="lazy" onerror="this.src='https://placehold.co/200?text=無照片'">
+                <img src="https://drive.google.com/thumbnail?sz=w1000&id=${p.imgId}" 
+                     loading="lazy" 
+                     onerror="this.src='https://placehold.co/200?text=圖片載入失敗'">
                 <p>${p.id}</p>
             </div>
         `).join('');
     }
 
-    // 搜尋過濾功能
+    // 即時搜尋邏輯
     function search() {
         const val = document.getElementById('searchInput').value.trim().toUpperCase();
         const cards = document.querySelectorAll('.card');
         const noResult = document.getElementById('noResult');
         let hasMatch = false;
 
-        // 如果搜尋框是空的，不顯示任何東西
+        // 若搜尋框為空則隱藏所有卡片
         if (val === "") {
             cards.forEach(card => card.style.display = 'none');
             noResult.style.display = 'none';
@@ -76,11 +81,11 @@
             }
         });
 
-        // 顯示或隱藏「找不到產品」提示
+        // 顯示或隱藏「無結果」提示
         noResult.style.display = hasMatch ? 'none' : 'block';
     }
 
-    // 啟動程式
+    // 啟動頁面
     init();
 </script>
 
