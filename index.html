@@ -3,106 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>K-Swiss 產品貨號查詢系統</title>
+    <title>K-Swiss 產品查詢系統</title>
     <style>
-        /* 燈箱背景 */
-        .modal { display: none; position: fixed; z-index: 1000; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); cursor: zoom-out; }
-        
-        /* 放大後的圖片 */
-        .modal-content { margin: auto; display: block; max-width: 90%; max-height: 90%; position: relative; top: 50%; transform: translateY(-50%); border: 5px solid white; border-radius: 10px; }
-        
-        /* 基礎樣式設計 */
-        body { font-family: "Microsoft JhengHei", sans-serif; background: #f0f2f5; padding: 20px; margin: 0; }
-        .search-container { position: sticky; top: 0; background: #f0f2f5; padding: 15px 0; z-index: 100; text-align: center; }
+        body { font-family: "Microsoft JhengHei", sans-serif; background: #f4f7f6; padding: 20px; margin: 0; }
+        .search-container { position: sticky; top: 0; background: #f4f7f6; padding: 15px 0; z-index: 100; text-align: center; }
         input { width: 90%; max-width: 500px; padding: 12px 20px; border: 2px solid #005596; border-radius: 25px; font-size: 16px; outline: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         
-        /* 產品網格佈局 */
+        /* 產品網格 */
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-top: 10px; }
-        .card { background: white; padding: 12px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: none; }
+        .card { background: white; padding: 12px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: none; cursor: pointer; }
         .card img { width: 100%; border-radius: 8px; object-fit: cover; aspect-ratio: 1/1; background: #eee; }
-        .card p { margin: 10px 0 5px; font-weight: bold; color: #333; font-size: 14px; }
+        .card p { margin: 10px 0 0; font-weight: bold; color: #333; font-size: 14px; }
+
+        /* 燈箱(放大功能)樣式 */
+        .modal { display: none; position: fixed; z-index: 1000; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); cursor: zoom-out; justify-content: center; align-items: center; }
+        .modal-content { max-width: 95%; max-height: 90%; border-radius: 10px; box-shadow: 0 0 20px rgba(255,255,255,0.2); }
         
-        /* 狀態提示 */
         .no-result { display: none; color: #888; text-align: center; margin-top: 50px; font-size: 18px; }
-        .instruction { text-align: center; color: #666; margin-bottom: 10px; font-size: 14px; }
     </style>
 </head>
-    <div id="myModal" class="modal" onclick="this.style.display='none'">
-    <img class="modal-content" id="imgFull">
-    </div>
-    
 <body>
 
 <div class="search-container">
-    <div class="instruction">請輸入完整或部分貨號（例如: 06781）</div>
-    <input type="text" id="searchInput" placeholder="搜尋 K-Swiss 貨號..." oninput="search()">
+    <input type="text" id="searchInput" placeholder="輸入貨號進行查詢..." oninput="search()">
 </div>
 
-<div id="productGrid" class="grid">
-    </div>
+<div id="productGrid" class="grid"></div>
+<div id="noResult" class="no-result">查無此產品</div>
 
-<div id="noResult" class="no-result">查無此貨號，請重新輸入</div>
+<div id="imgModal" class="modal" onclick="this.style.display='none'">
+    <img class="modal-content" id="fullImage">
+</div>
 
 <script>
-    function openModal(src) {
-    document.getElementById("myModal").style.display = "block";
-    document.getElementById("imgFull").src = src;
-}
     /**
-     * 【資料庫區】
-     * 請將您使用 Excel 公式產生的 500 筆資料貼在下方括號內
+     * 資料區：請貼上您用 Excel 生成的資料
+     * 範例：{ id: "貨號", imgId: "圖片ID" }
      */
     const allProducts = [
         { id: "06781-113", imgId: "1fTZYtRzb61vA4MoKF1Q0_gv5bZ7PgrQr" },
-        // --- 剩下的資料請接續貼在此處 ---
-        
+        // 在此下方繼續貼上其餘 499 筆資料
     ];
 
-    // 初始化：建立所有產品節點
+    // 初始化頁面
     function init() {
         const grid = document.getElementById('productGrid');
         grid.innerHTML = allProducts.map(p => `
-            <div class="card" data-id="${p.id}">
+            <div class="card" data-id="${p.id}" onclick="zoomImage('${p.imgId}')">
                 <img src="https://drive.google.com/thumbnail?sz=w1000&id=${p.imgId}" 
                      loading="lazy" 
-                     onclick="openModal(this.src)"
-                     onerror="this.src='https://placehold.co/200?text=圖片載入失敗'">
+                     onerror="this.src='https://placehold.co/200?text=載入失敗'">
                 <p>${p.id}</p>
             </div>
         `).join('');
     }
 
-    // 即時搜尋邏輯
+    // 搜尋功能
     function search() {
         const val = document.getElementById('searchInput').value.trim().toUpperCase();
         const cards = document.querySelectorAll('.card');
         const noResult = document.getElementById('noResult');
         let hasMatch = false;
 
-        // 若搜尋框為空則隱藏所有卡片
         if (val === "") {
-            cards.forEach(card => card.style.display = 'none');
+            cards.forEach(c => c.style.display = 'none');
             noResult.style.display = 'none';
             return;
         }
 
         cards.forEach(card => {
-            const productId = card.getAttribute('data-id').toUpperCase();
-            if (productId.includes(val)) {
+            const id = card.getAttribute('data-id').toUpperCase();
+            if (id.includes(val)) {
                 card.style.display = 'block';
                 hasMatch = true;
             } else {
                 card.style.display = 'none';
             }
         });
-
-        // 顯示或隱藏「無結果」提示
         noResult.style.display = hasMatch ? 'none' : 'block';
     }
 
-    // 啟動頁面
+    // 放大圖片功能
+    function zoomImage(imgId) {
+        const modal = document.getElementById('imgModal');
+        const fullImg = document.getElementById('fullImage');
+        // 使用更高解析度的 thumbnail 連結進行放大
+        fullImg.src = `https://drive.google.com/thumbnail?sz=w1600&id=${imgId}`;
+        modal.style.display = 'flex';
+    }
+
     init();
 </script>
-
 </body>
 </html>
