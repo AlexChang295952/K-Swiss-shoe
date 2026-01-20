@@ -7,21 +7,21 @@
     <style>
         body { font-family: "Microsoft JhengHei", sans-serif; background: #f4f7f6; padding: 20px; margin: 0; text-align: center; }
         
-        /* 搜尋框樣式 */
+        /* 搜尋容器 */
         .search-container { position: sticky; top: 0; background: #f4f7f6; padding: 15px 0; z-index: 100; }
         input { width: 90%; max-width: 500px; padding: 12px 20px; border: 2px solid #005596; border-radius: 25px; font-size: 16px; outline: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         
-        /* 產品網格佈局 */
+        /* 網格與卡片 */
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-top: 10px; }
         .card { background: white; padding: 12px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: none; cursor: pointer; transition: 0.3s; }
         .card:hover { transform: scale(1.03); }
         .card img { width: 100%; border-radius: 8px; object-fit: cover; aspect-ratio: 1/1; background: #eee; }
         
-        /* 文字樣式 */
+        /* 文字資訊 */
         .sku-id { font-weight: bold; color: #005596; margin: 10px 0 2px; font-size: 14px; }
-        .product-name { color: #666; font-size: 12px; margin: 0 0 5px; }
+        .product-name { color: #666; font-size: 12px; margin: 0 0 5px; height: 34px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 
-        /* 燈箱(放大功能)樣式 */
+        /* 放大燈箱 (Modal) */
         .modal { display: none; position: fixed; z-index: 1000; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); cursor: zoom-out; justify-content: center; align-items: center; }
         .modal-content { max-width: 95%; max-height: 90%; border-radius: 10px; box-shadow: 0 0 20px rgba(255,255,255,0.2); }
         
@@ -31,7 +31,7 @@
 <body>
 
 <div class="search-container">
-    <input type="text" id="searchInput" placeholder="輸入貨號或產品名稱搜尋..." oninput="search()">
+    <input type="text" id="searchInput" placeholder="輸入貨號或產品名稱查詢..." oninput="search()">
 </div>
 
 <div id="productGrid" class="grid"></div>
@@ -39,3 +39,51 @@
 
 <div id="imgModal" class="modal" onclick="this.style.display='none'">
     <img class="modal-content" id="fullImage">
+</div>
+
+<script>
+    /**
+     * 資料區：請將 Apps Script 產出的資料貼於此處
+     * 欄位包含 id, name, imgId
+     */
+    const allProducts = [
+        { id: "06781-113", name: "EADALL WP 男士 防水鞋", imgId: "1fTZYtRzb61vA4MoKF1Q0_gv5bZ7PgrQr" },
+        // ...其餘資料貼在此處
+    ];
+
+    function init() {
+        const grid = document.getElementById('productGrid');
+        grid.innerHTML = allProducts.map(p => `
+            <div class="card" data-id="${p.id}" data-name="${p.name}" onclick="zoomImage('${p.imgId}')">
+                <img src="https://drive.google.com/thumbnail?sz=w1000&id=${p.imgId}" 
+                     loading="lazy" 
+                     onerror="this.src='https://placehold.co/200?text=載入失敗'">
+                <p class="sku-id">${p.id}</p>
+                <p class="product-name">${p.name}</p>
+            </div>
+        `).join('');
+    }
+
+    function search() {
+        const val = document.getElementById('searchInput').value.trim().toUpperCase();
+        const cards = document.querySelectorAll('.card');
+        const noResult = document.getElementById('noResult');
+        let hasMatch = false;
+
+        if (val === "") {
+            cards.forEach(c => c.style.display = 'none');
+            noResult.style.display = 'none';
+            return;
+        }
+
+        cards.forEach(card => {
+            const id = card.getAttribute('data-id').toUpperCase();
+            const name = card.getAttribute('data-name').toUpperCase();
+            if (id.includes(val) || name.includes(val)) {
+                card.style.display = 'block';
+                hasMatch = true;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+        noResult.style.display = hasMatch ? 'none' : 'block';
