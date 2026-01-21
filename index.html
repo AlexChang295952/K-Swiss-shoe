@@ -5,70 +5,119 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>K-Swiss 產品查詢系統</title>
     <style>
+        /* 基礎版面設定 */
         body { font-family: "Microsoft JhengHei", sans-serif; background: #f4f7f6; padding: 20px; margin: 0; text-align: center; }
+        
+        /* 搜尋框區塊 */
         .search-container { position: sticky; top: 0; background: #f4f7f6; padding: 15px 0; z-index: 100; }
         input { width: 90%; max-width: 500px; padding: 12px 20px; border: 2px solid #005596; border-radius: 25px; font-size: 16px; outline: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        
+        /* 產品網格佈局 */
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; margin-top: 10px; }
-        .card { background: white; padding: 12px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: none; cursor: pointer; transition: 0.3s; }
+        
+        /* 產品卡片設定 */
+        .card { background: white; padding: 12px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: none; cursor: pointer; transition: 0.3s; overflow: hidden; }
         .card:hover { transform: scale(1.03); }
-        .card img { width: 100%; border-radius: 8px; object-fit: cover; aspect-ratio: 1/1; background: #eee; }
+        
+        /* 圖片縮放關鍵：使用 object-fit: contain 確保不超出且不裁切 */
+        .card img { 
+            width: 100%; 
+            height: auto;
+            aspect-ratio: 1/1; 
+            border-radius: 8px; 
+            background: #ffffff; /* 背景設為白色較美觀 */
+            object-fit: contain; /* 關鍵：圖片會完整縮小在框內 */
+            display: block;
+        }
+        
+        /* 文字資訊樣式 */
         .sku-id { font-weight: bold; color: #005596; margin: 10px 0 2px; font-size: 14px; }
         .product-name { color: #666; font-size: 12px; margin: 0 0 5px; height: 34px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-        
-        /* 放大燈箱樣式 */
+
+        /* 燈箱(放大功能)樣式 */
         .modal { display: none; position: fixed; z-index: 1000; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); cursor: zoom-out; justify-content: center; align-items: center; }
-        .modal-content { max-width: 95%; max-height: 90%; border-radius: 10px; }
+        .modal-content { 
+            max-width: 95%; 
+            max-height: 90%; 
+            border-radius: 10px; 
+            box-shadow: 0 0 20px rgba(255,255,255,0.2);
+            object-fit: contain; /* 放大後也確保不超出螢幕 */
+        }
+        
+        .no-result { display: none; color: #888; text-align: center; margin-top: 50px; font-size: 18px; }
     </style>
 </head>
 <body>
-    <div class="search-container">
-        <input type="text" id="searchInput" placeholder="搜尋貨號或產品名稱..." oninput="search()">
-    </div>
-    <div id="productGrid" class="grid"></div>
-    <div id="imgModal" class="modal" onclick="this.style.display='none'"><img class="modal-content" id="fullImage"></div>
+
+<div class="search-container">
+    <input type="text" id="searchInput" placeholder="輸入貨號或名稱搜尋..." oninput="search()">
+</div>
+
+<div id="productGrid" class="grid"></div>
+<div id="noResult" class="no-result">查無此產品</div>
+
+<div id="imgModal" class="modal" onclick="this.style.display='none'">
+    <img class="modal-content" id="fullImage">
+</div>
 
 <script>
     /**
-     * 資料區：請貼上您 500 筆產品資料
+     * 資料區：請貼上您從 Apps Script 產出的內容
      */
     const allProducts = [
-                  { id: "99442-628", name: "Marina", imgId: "117A1GRCwP59Ak74nMUuahQsKLzxexj6V" },
-                  { id: "99442-166", name: "Marina", imgId: "1mGfnlSg1kA20H3EgcBAQy4pODJq3Vqaa" },
-                  { id: "09448-280", name: "TECHNA 男士 休閒鞋", imgId: "1X0-xOiy8Exo1OPM72JMSKt_YL-BbxKxt" },
-                  { id: "06781-113", name: "EADALL WP 男士 防水鞋", imgId: "1fTZytRzb61vA4MoKF1Q0_gv5bZ7PgrQr" },
-        // ...其餘資料接續貼在此處
+        { id: "06781-113", name: "EADALL WP 男士 防水鞋", imgId: "1fTZytRzb61vA4MoKF1Q0_gv5bZ7PgrQr" },
+        // ...其餘資料請在此處貼上
     ];
 
+    // 初始化頁面
     function init() {
         const grid = document.getElementById('productGrid');
         grid.innerHTML = allProducts.map(p => `
             <div class="card" data-id="${p.id}" data-name="${p.name}" onclick="zoomImage('${p.imgId}')">
                 <img src="https://drive.google.com/thumbnail?sz=w1000&id=${p.imgId}" 
                      loading="lazy" 
-                     onerror="this.src='https://placehold.co/200?text=載入失敗'">
+                     onerror="this.src='https://placehold.co/200?text=圖片載入中...'">
                 <p class="sku-id">${p.id}</p>
                 <p class="product-name">${p.name}</p>
             </div>
         `).join('');
     }
 
+    // 搜尋功能
     function search() {
         const val = document.getElementById('searchInput').value.trim().toUpperCase();
         const cards = document.querySelectorAll('.card');
-        if (val === "") { cards.forEach(c => c.style.display = 'none'); return; }
+        const noResult = document.getElementById('noResult');
+        let hasMatch = false;
+
+        if (val === "") {
+            cards.forEach(c => c.style.display = 'none');
+            noResult.style.display = 'none';
+            return;
+        }
+
         cards.forEach(card => {
-            const match = card.getAttribute('data-id').toUpperCase().includes(val) || 
-                          card.getAttribute('data-name').toUpperCase().includes(val);
-            card.style.display = match ? 'block' : 'none';
+            const id = card.getAttribute('data-id').toUpperCase();
+            const name = card.getAttribute('data-name').toUpperCase();
+            if (id.includes(val) || name.includes(val)) {
+                card.style.display = 'block';
+                hasMatch = true;
+            } else {
+                card.style.display = 'none';
+            }
         });
+        noResult.style.display = hasMatch ? 'none' : 'block';
     }
 
+    // 點擊放大功能
     function zoomImage(imgId) {
         const modal = document.getElementById('imgModal');
+        const fullImg = document.getElementById('fullImage');
         // 放大時載入更高解析度的圖 (sz=w1600)
-        document.getElementById('fullImage').src = `https://drive.google.com/thumbnail?sz=w1600&id=${imgId}`;
+        fullImg.src = `https://drive.google.com/thumbnail?sz=w1600&id=${imgId}`;
         modal.style.display = 'flex';
     }
+
     init();
 </script>
 </body>
